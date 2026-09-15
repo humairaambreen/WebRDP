@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRDP</title>
+    <meta name="description" content="Browser-only Windows RDP access - no client, no plugins.">
+    <meta name="theme-color" content="#05070c">
+
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48x48.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/android-chrome-512x512.png">
+    <link rel="manifest" href="assets/site.webmanifest">
+
+    <link rel="preconnect" href="https://api.fontshare.com">
+    <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/iconoir-icons/iconoir@main/css/iconoir.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ============ Boot splash ============ -->
+    <!-- Huge, blurred, centered logo on every load - sharpens into focus,
+         holds for a beat, then fades away to reveal the dashboard
+         underneath (which is already rendered by the time this fades). -->
+    <div id="boot-splash">
+        <img src="assets/logo-256.png" alt="">
+    </div>
+
+    <!-- ============ Dashboard screen ============ -->
+    <div id="dashboard-screen" class="screen active">
+        <nav class="dash-navbar">
+            <div class="navbar-pill">
+                <img class="navbar-logo" src="assets/logo-96.png" srcset="assets/logo-48.png 1x, assets/logo-96.png 2x" alt="WebRDP" width="40" height="40">
+                <span class="navbar-divider"></span>
+                <span id="navbar-count" class="navbar-count">0 saved</span>
+            </div>
+        </nav>
+        <main class="dash-main">
+            <div id="connections-grid" class="connections-grid">
+                <!-- saved connection cards + "add new" card are rendered here by dashboard.js -->
+            </div>
+        </main>
+    </div>
+
+    <!-- ============ New / edit connection modal ============ -->
+    <div id="connection-modal" class="modal-overlay">
+        <form id="connection-form" class="modal-card">
+            <h2 class="modal-title">New connection</h2>
+
+            <label class="modal-field">
+                <span class="modal-label">Name <span class="modal-optional">(optional)</span></span>
+                <input type="text" id="conn-name" placeholder="e.g. Office desktop" autocomplete="off">
+            </label>
+
+            <label class="modal-field">
+                <span class="modal-label">IP addr</span>
+                <input type="text" id="conn-host" placeholder="192.168.1.50 or 192.168.1.50:3399" autocomplete="off" spellcheck="false" required>
+            </label>
+
+            <label class="modal-field">
+                <span class="modal-label">Username</span>
+                <input type="text" id="conn-username" placeholder="Username" autocomplete="username" spellcheck="false" required>
+            </label>
+
+            <label class="modal-field">
+                <span class="modal-label">Password</span>
+                <input type="password" id="conn-password" placeholder="Password" autocomplete="current-password">
+            </label>
+
+            <p id="modal-error" class="modal-error"></p>
+
+            <div class="modal-footer">
+                <label class="modal-checkbox">
+                    <input type="checkbox" id="conn-save" checked>
+                    <span>Save for future connections</span>
+                </label>
+                <div class="modal-actions">
+                    <button type="button" id="modal-cancel" class="btn btn-ghost-solid">Cancel</button>
+                    <button type="submit" id="modal-connect" class="btn btn-primary">
+                        <i class="iconoir-play"></i>
+                        <span>Connect</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- ============ Session screen ============ -->
+    <div id="session-screen" class="screen">
+        <div id="session-body" class="session-body">
+            <main id="canvas-stage">
+                <canvas id="rdp-screen" width="1280" height="720" tabindex="0"></canvas>
+                <p id="empty-hint">Connecting…</p>
+                <div id="reconnect-banner" class="reconnect-banner">
+                    <span id="reconnect-text">Reconnecting…</span>
+                    <button id="reconnect-now-btn" class="btn btn-ghost-solid btn-sm">Reconnect now</button>
+                </div>
+                <div id="shot-flash"></div>
+            </main>
+
+            <!-- Lives inside #session-body (the fullscreen target - see
+                 app.js) so disconnect/screenshot/etc. keep working and
+                 stay visible when the user goes fullscreen. -->
+            <nav id="session-dock" class="session-dock">
+                <button id="sidebar-home" class="dock-btn" data-label="Dashboard">
+                    <i class="iconoir-home-simple"></i>
+                </button>
+                <button id="sidebar-screenshot" class="dock-btn" data-label="Screenshot" disabled>
+                    <i class="iconoir-camera"></i>
+                </button>
+                <button id="sidebar-fullscreen" class="dock-btn" data-label="Expand">
+                    <i class="iconoir-expand"></i>
+                </button>
+                <button id="sidebar-logs" class="dock-btn" data-label="Session log">
+                    <i class="iconoir-list"></i>
+                </button>
+                <button id="sidebar-freeze-alerts" class="dock-btn" data-label="Freeze alerts: on">
+                    <i class="iconoir-bell"></i>
+                </button>
+
+                <span class="dock-divider"></span>
+
+                <div class="dock-status">
+                    <span id="status-dot" class="status-dot status-disconnected"></span>
+                    <span id="status" class="dock-status-text">Disconnected</span>
+                </div>
+
+                <span class="dock-divider"></span>
+
+                <button id="sidebar-disconnect" class="dock-btn dock-btn-danger" data-label="Disconnect" disabled>
+                    <i class="iconoir-log-out"></i>
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- ============ Session log drawer (shared) ============ -->
+    <aside id="logs-panel">
+        <div class="logs-header">
+            <span><i class="iconoir-list"></i> Session log</span>
+            <div class="logs-actions">
+                <button id="logs-copy" class="btn btn-icon btn-ghost" title="Copy log">
+                    <i class="iconoir-copy"></i>
+                </button>
+                <button id="logs-clear" class="btn btn-icon btn-ghost" title="Clear log">
+                    <i class="iconoir-erase"></i>
+                </button>
+                <button id="logs-close" class="btn btn-icon btn-ghost" title="Close">
+                    <i class="iconoir-xmark"></i>
+                </button>
+            </div>
+        </div>
+        <div id="log-panel"></div>
+    </aside>
+    <div id="logs-backdrop"></div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

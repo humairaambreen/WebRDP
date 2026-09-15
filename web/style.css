@@ -1,0 +1,780 @@
+:root {
+    --bg: #05070c;
+    --canvas-bg: #030409;
+    --panel: rgba(255, 255, 255, 0.05);
+    --panel-solid: #12141c;
+    --glass: rgba(15, 17, 26, 0.72);
+    --border: rgba(255, 255, 255, 0.1);
+    --border-strong: rgba(255, 255, 255, 0.22);
+    --text: #f3f5f9;
+    --muted: #8d93a3;
+    /* Blue accent pulled straight from the WebRDP logo's gradient. */
+    --accent-1: #2f6ef6;
+    --accent-2: #29c2fd;
+    --danger: #f2545b;
+    --warn: #f5a623;
+    --success: #35d399;
+    --info: #6d9bfc;
+    --radius-pill: 999px;
+    --radius-xl: 34px;
+    --radius-lg: 28px;
+    --radius-md: 20px;
+    --radius-sm: 14px;
+
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --fast: 0.18s var(--ease);
+    --med: 0.32s var(--ease);
+    --slow: 0.6s var(--ease);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    height: 100%;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 300;
+    font-size: 16px;
+    overflow: hidden;
+}
+
+.screen { display: none; height: 100%; }
+.screen.active { display: block; }
+
+/* ================= Boot splash ================= */
+/* Every load: huge blurred logo, centered, full-bleed - sharpens in,
+   holds a moment, then fades away to reveal the dashboard underneath. */
+#boot-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    opacity: 1;
+    transition: opacity 0.6s var(--ease);
+}
+#boot-splash img {
+    width: 240px;
+    height: 240px;
+    border-radius: 60px;
+    filter: blur(38px);
+    transform: scale(1.3);
+    opacity: 0.85;
+    transition: filter 1.1s var(--ease), transform 1.1s var(--ease), opacity 1.1s var(--ease);
+}
+#boot-splash.sharp img {
+    filter: blur(0);
+    transform: scale(1);
+    opacity: 1;
+}
+#boot-splash.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Interactive surfaces still transition color/background/border/shadow -
+   just never position/scale on hover anymore (see item 2: no more
+   "lift" hover). Only :active keeps a tiny press-down, for click
+   feedback, not hover. */
+.btn,
+.dock-btn,
+.conn-card,
+.conn-delete,
+.modal-card,
+.modal-field input,
+#logs-panel,
+#reconnect-banner,
+.navbar-pill,
+.dock-status,
+.status-dot {
+    transition:
+        background var(--fast),
+        border-color var(--fast),
+        box-shadow var(--med),
+        opacity var(--fast),
+        color var(--fast);
+}
+
+/* ================= Blur-reveal (no GSAP, homegrown) ================= */
+
+.reveal {
+    opacity: 0;
+    filter: blur(14px);
+    transform: translateY(10px);
+    transition: opacity 0.7s var(--ease), filter 0.7s var(--ease), transform 0.7s var(--ease);
+    will-change: opacity, filter, transform;
+}
+.reveal-in {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 50px;
+    border: none;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 500;
+    font-size: 16px;
+    letter-spacing: -0.01em;
+}
+
+.btn:active { transform: scale(0.96); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.btn-primary {
+    padding: 0 26px;
+    color: white;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent-1));
+    box-shadow: 0 8px 28px rgba(47, 110, 246, 0.35);
+}
+.btn-primary:not(:disabled):hover {
+    background: linear-gradient(135deg, var(--accent-2), var(--accent-1) 85%);
+    box-shadow: 0 10px 32px rgba(47, 110, 246, 0.5);
+}
+
+.btn-ghost-solid {
+    padding: 0 22px;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid var(--border);
+}
+.btn-ghost-solid:hover { background: rgba(255, 255, 255, 0.13); border-color: var(--border-strong); }
+.btn-sm { height: 38px; font-size: 14px; padding: 0 16px; }
+
+.btn-icon {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+}
+.btn-icon:not(:disabled):hover { background: rgba(255, 255, 255, 0.14); border-color: var(--border-strong); }
+.btn-icon i { font-size: 20px; }
+
+.btn-ghost {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+}
+.btn-ghost:hover { color: var(--text); background: rgba(255, 255, 255, 0.08); }
+
+.status-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 4px transparent;
+}
+.status-disconnected { background: #5a5c68; }
+.status-connecting { background: var(--warn); animation: pulse 1.1s ease-in-out infinite; }
+.status-connected { background: var(--success); box-shadow: 0 0 0 5px rgba(53, 211, 153, 0.2); border-radius: 4px; }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+}
+
+/* ================= Dashboard ================= */
+
+.dash-navbar {
+    position: fixed;
+    top: 26px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    z-index: 20;
+    pointer-events: none;
+}
+
+/* Just the logo mark (it already carries the full "WebRDP" wordmark) and
+   the connection count - no separate text label duplicating the logo. */
+.navbar-pill {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 26px 10px 14px;
+    background: var(--glass);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.navbar-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    display: block;
+    flex-shrink: 0;
+}
+
+.navbar-divider {
+    width: 1px;
+    height: 18px;
+    background: var(--border-strong);
+    border-radius: 1px;
+}
+
+.navbar-count {
+    font-size: 14.5px;
+    font-weight: 400;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.dash-main {
+    height: 100%;
+    overflow-y: auto;
+    padding: 150px 40px 60px;
+}
+
+.connections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 26px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.dash-error {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    border-radius: var(--radius-md);
+    background: rgba(245, 166, 35, 0.1);
+    border: 1px solid rgba(245, 166, 35, 0.35);
+    color: #f5c374;
+    font-size: 15px;
+}
+.dash-error i { flex-shrink: 0; font-size: 18px; }
+
+/* ---- Connection card: the whole thing IS the preview now ----
+   A plain screenshot image, a progressive blur that ramps from sharp
+   at the top to a soft frosted blur at the bottom, a dark scrim for
+   legibility, and the credentials sitting in that blurred band. No
+   separate flat info panel below it anymore. */
+.conn-card {
+    position: relative;
+    height: 268px;
+    text-align: left;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 0;
+    overflow: hidden;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--text);
+}
+.conn-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: 0 26px 60px rgba(0, 0, 0, 0.4);
+}
+
+.conn-preview {
+    position: absolute;
+    inset: 0;
+    background: var(--canvas-bg);
+}
+
+.conn-preview-layer {
+    position: absolute;
+    inset: 0;
+    background-image: var(--preview-img);
+    background-size: cover;
+    background-position: center;
+}
+/* Layer 1: sharp image, full card - this is the "clear at the top" base. */
+.conn-preview-base { }
+/* Layer 2 + 3: same image, progressively blurred, each masked to a lower
+   band of the card so the blur ramps in gradually toward the bottom
+   instead of snapping on at a hard line - the "progressive blur" look. */
+.conn-preview-blur-1 {
+    filter: blur(6px);
+    -webkit-mask-image: linear-gradient(to top, #000 30%, transparent 62%);
+    mask-image: linear-gradient(to top, #000 30%, transparent 62%);
+}
+.conn-preview-blur-2 {
+    filter: blur(18px);
+    -webkit-mask-image: linear-gradient(to top, #000 16%, transparent 42%);
+    mask-image: linear-gradient(to top, #000 16%, transparent 42%);
+}
+.conn-preview-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(3, 4, 9, 0.82) 0%, rgba(3, 4, 9, 0.35) 38%, transparent 62%);
+}
+
+.conn-preview-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.conn-preview-placeholder img { width: 52px; height: 52px; border-radius: 14px; opacity: 0.45; }
+
+.conn-preview-info {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 18px 20px;
+}
+.conn-name { font-weight: 500; font-size: 18px; letter-spacing: -0.01em; }
+.conn-meta { font-size: 14px; color: var(--muted); font-weight: 300; }
+.conn-meta-muted { opacity: 0.75; }
+
+.conn-delete {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(5, 6, 10, 0.6);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+}
+.conn-card:hover .conn-delete { opacity: 1; }
+.conn-delete:hover { background: var(--danger); }
+.conn-delete i { font-size: 17px; }
+
+.conn-autoconnect {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(5, 6, 10, 0.6);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+}
+.conn-card:hover .conn-autoconnect { opacity: 1; }
+.conn-autoconnect:hover { background: rgba(47, 110, 246, 0.35); }
+.conn-autoconnect i { font-size: 17px; }
+/* Once it's the auto-connect entry, it stays visible (not hover-gated) -
+   this is a standing setting, not a fleeting action, so it should be
+   readable at a glance. */
+.conn-autoconnect.active {
+    opacity: 1;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent-1));
+    border-color: transparent;
+}
+
+.conn-autoconnect-badge { color: var(--accent-2); }
+
+.conn-card-add {
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    display: flex;
+    flex-direction: column;
+    border-style: dashed;
+    border-width: 2px;
+    color: var(--muted);
+    background: transparent;
+}
+.conn-card-add:hover {
+    color: var(--text);
+    border-color: var(--accent-1);
+    border-style: solid;
+    background: rgba(47, 110, 246, 0.07);
+}
+.conn-card-add i {
+    font-size: 40px;
+    width: 68px;
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.06);
+}
+.conn-card-add:hover i { background: rgba(47, 110, 246, 0.16); }
+.conn-card-add span { font-size: 16px; font-weight: 500; }
+
+/* ================= Connection modal ================= */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--med);
+    z-index: 40;
+}
+.modal-overlay.open { opacity: 1; pointer-events: auto; }
+
+.modal-card {
+    width: 440px;
+    max-width: calc(100vw - 32px);
+    background: var(--panel-solid);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-shadow: 0 40px 110px rgba(0, 0, 0, 0.55);
+}
+
+.modal-title { margin: 0 0 4px; font-size: 22px; font-weight: 500; letter-spacing: -0.01em; }
+
+.modal-field { display: flex; flex-direction: column; gap: 8px; }
+.modal-label { font-size: 14px; color: var(--muted); font-weight: 400; }
+.modal-optional { opacity: 0.7; }
+
+.modal-field input {
+    height: 52px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.045);
+    color: var(--text);
+    padding: 0 20px;
+    font-family: inherit;
+    font-weight: 300;
+    font-size: 16px;
+    outline: none;
+}
+.modal-field input:focus {
+    border-color: var(--accent-1);
+    background: rgba(47, 110, 246, 0.08);
+}
+
+.modal-error { min-height: 18px; color: var(--danger); font-size: 14px; margin: 0; }
+
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 6px;
+}
+
+.modal-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13.5px;
+    color: var(--muted);
+    line-height: 1.4;
+    cursor: pointer;
+    max-width: 170px;
+}
+.modal-checkbox input { margin-top: 3px; accent-color: var(--accent-1); width: 16px; height: 16px; }
+
+.modal-actions { display: flex; gap: 10px; }
+
+/* ================= Session screen ================= */
+
+.session-body { position: relative; height: 100%; }
+
+#canvas-stage {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--canvas-bg);
+    background-image:
+        radial-gradient(circle at 20% 20%, rgba(47, 110, 246, 0.08), transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(41, 194, 253, 0.06), transparent 40%);
+    /* Reserve room at the bottom for the floating dock so it never sits
+       on top of the remote desktop - the canvas simply never lays out
+       underneath it. */
+    padding-bottom: 104px;
+}
+
+#rdp-screen {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: var(--radius-md);
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
+    outline: none;
+    background: #000;
+}
+#rdp-screen:not([data-active]) { display: none; }
+
+#empty-hint {
+    position: relative;
+    color: var(--muted);
+    font-size: 16px;
+    text-align: center;
+    max-width: 360px;
+    font-weight: 300;
+}
+
+#shot-flash {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
+    border-radius: var(--radius-md);
+}
+#shot-flash.flash { animation: shotFlash 0.45s var(--ease); }
+@keyframes shotFlash {
+    0% { opacity: 0; }
+    18% { opacity: 0.75; }
+    100% { opacity: 0; }
+}
+
+.reconnect-banner {
+    position: absolute;
+    top: 84px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-14px);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px 14px 24px;
+    background: var(--glass);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    font-size: 15px;
+    font-weight: 300;
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--med), transform var(--med);
+}
+.reconnect-banner.visible { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+.reconnect-banner.warn { border-color: rgba(245, 166, 35, 0.5); }
+
+/* ================= Session dock ================= */
+
+.session-dock {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: var(--glass);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    z-index: 20;
+}
+
+/* Fullscreen is now requested on the whole session-body (see app.js), so
+   the dock stays inside the fullscreen element and its buttons - most
+   importantly disconnect and screenshot - keep working instead of being
+   stranded outside it. */
+.session-body:fullscreen .session-dock,
+.session-body:-webkit-full-screen .session-dock {
+    bottom: 28px;
+}
+
+.dock-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    font-family: inherit;
+}
+.dock-btn i { font-size: 24px; }
+
+.dock-btn::before {
+    content: attr(data-label);
+    position: absolute;
+    bottom: calc(100% + 14px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: var(--panel-solid);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 400;
+    white-space: nowrap;
+    padding: 8px 14px;
+    border-radius: var(--radius-pill);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--fast), transform var(--fast);
+}
+.dock-btn:hover:not(:disabled)::before { opacity: 1; transform: translateX(-50%) translateY(0); }
+.dock-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
+.dock-btn:active:not(:disabled) { transform: scale(0.94); }
+.dock-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.dock-btn-danger:hover:not(:disabled) {
+    background: rgba(242, 84, 91, 0.18);
+    color: #ff8a90;
+}
+
+/* Muted/off indicator (freeze alerts toggle) - stands out a little so
+   "you turned this off" doesn't get lost among the other dock icons. */
+.dock-btn-active {
+    background: rgba(245, 166, 35, 0.16);
+    color: var(--warn);
+}
+.dock-btn-active:hover:not(:disabled) { background: rgba(245, 166, 35, 0.26); }
+
+.dock-divider {
+    width: 1px;
+    height: 26px;
+    background: var(--border-strong);
+    border-radius: 1px;
+    flex-shrink: 0;
+}
+
+.dock-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
+    height: 56px;
+    font-size: 14.5px;
+    font-weight: 400;
+    color: var(--muted);
+    white-space: nowrap;
+}
+.dock-status-text { color: var(--text); font-weight: 300; }
+
+/* ================= Logs drawer ================= */
+
+#logs-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--med);
+    z-index: 25;
+}
+#logs-backdrop.visible { opacity: 1; pointer-events: auto; }
+
+#logs-panel {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    bottom: 24px;
+    width: 440px;
+    max-width: calc(100vw - 32px);
+    background: var(--glass);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(calc(100% + 40px));
+    opacity: 0;
+    transition: transform var(--slow), opacity var(--med);
+}
+#logs-panel.open { transform: translateX(0); opacity: 1; }
+
+.logs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 22px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+    font-size: 16px;
+}
+.logs-header i { color: var(--accent-2); margin-right: 8px; font-size: 19px; }
+.logs-actions { display: flex; gap: 4px; }
+
+#log-panel {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 20px;
+    font-family: 'SF Mono', 'Menlo', ui-monospace, monospace;
+    font-size: 13px;
+}
+
+.log-entry {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    line-height: 1.45;
+}
+.log-time { color: var(--muted); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.log-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--info); }
+.log-msg { color: var(--text); word-break: break-word; }
+.log-success .log-dot { background: var(--success); }
+.log-warn .log-dot { background: var(--warn); }
+.log-error .log-dot { background: var(--danger); }
+.log-error .log-msg { color: #ff8a90; }
+
+#log-panel::-webkit-scrollbar { width: 6px; }
+#log-panel::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 999px; }
+
+/* ================= Small screens ================= */
+
+@media (max-width: 860px) {
+    .connections-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+    .dash-main { padding: 130px 20px 50px; }
+    .navbar-pill { padding: 8px 20px 8px 8px; gap: 10px; }
+    .navbar-logo { width: 34px; height: 34px; }
+    .navbar-count { font-size: 13px; }
+    .session-dock { gap: 2px; padding: 8px; bottom: 16px; }
+    .dock-btn { width: 48px; height: 48px; }
+    .dock-status { padding: 0 10px; font-size: 13px; }
+    .dock-status-text { display: none; }
+}

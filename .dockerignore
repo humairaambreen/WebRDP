@@ -1,0 +1,8 @@
+node_modules
+ironrdp-wasm
+.git
+*.log
+.DS_Store
+README.md
+DEPLOY.md
+.deploy-notes.md
