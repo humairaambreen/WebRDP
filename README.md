@@ -64,15 +64,14 @@ sequenceDiagram
 
 ## Quick start
 
-Requires `git` and Node.js 18+. Setup installs Rust + wasm-pack for you
-if you don't have them — that's the only heavy part, and it's one-time.
+Requires `git` and Node.js 18+. The WASM engine is pre-built, so no Rust toolchain is required.
 
 ```bash
 git clone https://github.com/humairaambreen/WebRDP.git
 cd WebRDP
 
-./scripts/setup.sh   # one-time: builds the IronRDP engine
-./scripts/start.sh    # every time after
+npm install          # or ./scripts/setup.sh
+npm start            # or ./scripts/start.sh
 ```
 
 Open `http://localhost:8080`, click "add a new connection," fill in the
@@ -110,11 +109,16 @@ A `Dockerfile` is included for container deployment (such as Back4app Containers
 ```
 webrdp/
 ├── Dockerfile              # for container deployment
+├── server.js               # static server + WebSocket proxy
+├── package.json
+├── pkg/                    # pre-built IronRDP WASM engine
+├── lib/
+│   └── rdp-proxy.js        # RDCleanPath proxy handler
 ├── scripts/
-│   ├── setup.sh            # one-time: build + install
-│   ├── start.sh             # run it
+│   ├── setup.sh            # one-time: install dependencies
+│   ├── start.sh            # run it
 │   └── tls-ip-sni-fix.js
-└── web/                     # the actual UI
+└── web/                    # the actual UI
     ├── index.html
     ├── style.css
     ├── app.js

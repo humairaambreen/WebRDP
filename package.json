@@ -1,0 +1,13 @@
+{
+  "name": "webrdp",
+  "version": "1.0.0",
+  "description": "Browser-only Windows RDP access - no client, no plugins",
+  "main": "server.js",
+  "scripts": {
+    "start": "node -r ./scripts/tls-ip-sni-fix.js server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "express-ws": "^5.0.2"
+  }
+}
