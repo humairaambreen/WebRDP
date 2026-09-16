@@ -4,3 +4,4 @@ ironrdp-wasm/
 .DS_Store
 .deploy-notes.md
 DEPLOY.md
+.vercel
