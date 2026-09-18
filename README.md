@@ -206,4 +206,4 @@ Because authentication occurs directly at the target Windows endpoint rather tha
 
 ## Licence
 
-Distributed under the **MIT Licence**. Core RDP cryptographic parsing and rendering capabilities provided via [IronRDP](https://github.com/Devolutions/IronRDP) by Devolutions under Apache-2.0 / MIT.
+Distributed under the **GPLv3 Licence**. Core RDP cryptographic parsing and rendering capabilities provided via [IronRDP](https://github.com/Devolutions/IronRDP) by Devolutions under Apache-2.0 / MIT.
