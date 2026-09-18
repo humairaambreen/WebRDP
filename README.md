@@ -34,7 +34,7 @@ Underpinned by a client-side WebAssembly execution environment synthesised from 
   <img src="screenshots/mainscreenshot.jpg" width="900" alt="WebRDP Connection Management Console" />
 </p>
 <p align="center">
-  <em>Figure 1: The WebRDP Console — Client-side connection orchestration with encapsulated ephemeral state persistence.</em>
+  <em>Screenshot 1: The WebRDP Console — Client-side connection orchestration with encapsulated ephemeral state persistence.</em>
 </p>
 
 <br>
@@ -43,7 +43,7 @@ Underpinned by a client-side WebAssembly execution environment synthesised from 
   <img src="screenshots/connectedscreenshot.png" width="900" alt="Active Session Framebuffer and Control Dock" />
 </p>
 <p align="center">
-  <em>Figure 2: Active Graphical Viewport — Real-time hardware-accelerated canvas rendering with persistent session telemetry and autonomous reconnection heuristics.</em>
+  <em>Screenshot 2: Active Graphical Viewport — Real-time hardware-accelerated canvas rendering with persistent session telemetry and autonomous reconnection heuristics.</em>
 </p>
 
 ---
